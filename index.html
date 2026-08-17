@@ -87,7 +87,60 @@ function render(){
 document.getElementById("search").addEventListener("input",render);
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active");genre=b.dataset.g;render()});
 function openStory(t,a,d){document.getElementById("modalContent").innerHTML=`<h2>${t}</h2><p class="muted">by ${a}</p><p>${d}</p><p>⭐ Reader rating</p><button class="btn primary" onclick="alert('Reader mode will be connected to real chapters in the backend version.')">Start Reading</button>`;document.getElementById("modal").classList.add("show")}
-function openPublish(){document.getElementById("modalContent").innerHTML=`<h2>✍️ Publish a Novel</h2><p class="muted">Prototype form — submissions are not stored yet.</p><div class="formrow"><input placeholder="Novel title"></div><div class="formrow"><input placeholder="Author name"></div><div class="formrow"><select><option>Fantasy</option><option>Action</option><option>Romance</option><option>Horror</option><option>Mystery</option></select></div><div class="formrow"><textarea rows="5" placeholder="Novel description"></textarea></div><button class="btn primary" onclick="alert('In the real backend version, this button will save the novel to a database.');closeModal()">Publish</button>`;document.getElementById("modal").classList.add("show")}
+async function openPublish(){
+  document.getElementById("modalContent").innerHTML=`
+    <h2>✍️ Publish a Novel</h2>
+    <div class="formrow">
+      <input id="novelTitle" placeholder="Novel title">
+    </div>
+    <div class="formrow">
+      <input id="novelAuthor" placeholder="Author name">
+    </div>
+    <div class="formrow">
+      <select id="novelGenre">
+        <option>Fantasy</option>
+        <option>Action</option>
+        <option>Romance</option>
+        <option>Horror</option>
+        <option>Mystery</option>
+      </select>
+    </div>
+    <div class="formrow">
+      <textarea id="novelDescription" rows="5" placeholder="Novel description"></textarea>
+    </div>
+    <button class="btn primary" onclick="saveNovel()">Publish</button>
+  `;
+  document.getElementById("modal").classList.add("show");
+}
+
+async function saveNovel(){
+  const title=document.getElementById("novelTitle").value.trim();
+  const author=document.getElementById("novelAuthor").value.trim();
+  const genre=document.getElementById("novelGenre").value;
+  const description=document.getElementById("novelDescription").value.trim();
+
+  if(!title){
+    alert("Please enter a novel title.");
+    return;
+  }
+
+  const {data,error}=await supabaseClient
+    .from("novels")
+    .insert([{
+      title:title,
+      description:"By "+author+" • "+genre+" • "+description
+    }])
+    .select();
+
+  if(error){
+    alert("Could not publish: "+error.message);
+    console.error(error);
+    return;
+  }
+
+  alert("Novel published successfully! 🎉");
+  closeModal();
+}
 function closeModal(){document.getElementById("modal").classList.remove("show")}
 document.getElementById("modal").onclick=e=>{if(e.target.id==="modal")closeModal()};
 render();
