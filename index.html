@@ -78,11 +78,51 @@ const novels=[
 {title:"Skybound",author:"Jin Arata",genres:["Fantasy","Action"],rating:"4.5",desc:"A courier discovers the floating cities are hiding a terrible secret."}
 ];
 let genre="All";
-function render(){
- let q=document.getElementById("search").value.toLowerCase();
- let a=novels.filter(n=>(genre==="All"||n.genres.includes(genre))&&n.title.toLowerCase().includes(q));
- document.getElementById("count").textContent=a.length+" stories";
- document.getElementById("grid").innerHTML=a.map(n=>`<article class="card" onclick="openStory('${n.title}','${n.author}','${n.desc}')"><div class="cover">${n.title}</div><h3>${n.title}</h3><div class="muted">by ${n.author}</div><p class="muted">${n.genres.map(g=>`<span class="tag">${g}</span>`).join("")}</p><div>⭐ ${n.rating}</div><div class="actions"><button class="btn" onclick="event.stopPropagation();openStory('${n.title}','${n.author}','${n.desc}')">Read</button></div></article>`).join("")||"<p class='muted'>No stories found.</p>";
+async function render(){
+  let q=document.getElementById("search").value.toLowerCase();
+
+  const {data,error}=await supabaseClient
+    .from("novels")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    console.error("Could not load novels:",error);
+    document.getElementById("count").textContent="Could not load stories";
+    return;
+  }
+
+  let allNovels=data.map(n=>({
+    title:n.title,
+    author:n.description?.split(" • ")[0]?.replace("By ","")||"Unknown author",
+    genres:n.description?.includes(" • ")
+      ? [n.description.split(" • ")[1]]
+      : [],
+    rating:"—",
+    desc:n.description?.split(" • ").slice(2).join(" • ")||""
+  }));
+
+  let a=allNovels.filter(n=>
+    (genre==="All"||n.genres.includes(genre)) &&
+    n.title.toLowerCase().includes(q)
+  );
+
+  document.getElementById("count").textContent=a.length+" stories";
+
+  document.getElementById("grid").innerHTML=a.map(n=>`
+    <article class="card" onclick="openStory('${n.title}','${n.author}','${n.desc}')">
+      <div class="cover">${n.title}</div>
+      <h3>${n.title}</h3>
+      <div class="muted">by ${n.author}</div>
+      <p class="muted">
+        ${n.genres.map(g=>`<span class="tag">${g}</span>`).join("")}
+      </p>
+      <div>⭐ ${n.rating}</div>
+      <div class="actions">
+        <button class="btn" onclick="event.stopPropagation();openStory('${n.title}','${n.author}','${n.desc}')">Read</button>
+      </div>
+    </article>
+  `).join("")||"<p class='muted'>No stories found.</p>";
 }
 document.getElementById("search").addEventListener("input",render);
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active");genre=b.dataset.g;render()});
