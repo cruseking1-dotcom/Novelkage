@@ -160,7 +160,6 @@ async function saveNovel(){
   const title=document.getElementById("novelTitle").value.trim();
   const author=document.getElementById("novelAuthor").value.trim();
   const genre=document.getElementById("novelGenre").value;
-  const content=document.getElementById("novelContent").value;
   const description=document.getElementById("novelDescription").value.trim();
 
   if(!title){
@@ -173,7 +172,6 @@ async function saveNovel(){
     .insert([{
       title:title,
       description:"By "+author+" • "+genre+" • "+description
-      content:content
     }])
     .select();
 
